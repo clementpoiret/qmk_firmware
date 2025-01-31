@@ -12,7 +12,7 @@ static bool colABPressed   = false;
 static bool encoderPressed = false;
 
 void clicked(void) {
-    tap_code(KC_MPLY);
+    tap_code(KC_MUTE);
 }
 
 void turned(bool clockwise) {
@@ -23,7 +23,7 @@ void turned(bool clockwise) {
     } else if (IS_LAYER_ON(5)) {
         tap_code16(clockwise ? LGUI(KC_Y) : LGUI(KC_Z));
     } else {
-        tap_code16(clockwise ? KC_PGDN : KC_PGUP);
+        tap_code16(clockwise ? KC_VOLU : KC_VOLD);
     }
 }
 
