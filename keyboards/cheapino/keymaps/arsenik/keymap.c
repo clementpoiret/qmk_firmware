@@ -127,6 +127,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
 static inline bool tap_keycode_used_in_text(uint16_t keycode) {
     // We can’t make assumptions on curstom keycodes
     if (keycode >= SAFE_RANGE) return false;
+    // fixes hrm for home on scln
+    if (keycode == KC_SSCLN) return true;
 
     // Remove "quantum" part of the keycode to get the action on tap.
     const uint16_t tap_keycode = keycode & 0xff;
