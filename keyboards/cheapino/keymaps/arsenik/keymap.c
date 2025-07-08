@@ -9,6 +9,7 @@ enum arsenik_layers {
     _num_nav,
     _num_pad,
     _fun_pad,
+    _mouse_pad,
 };
 
 enum custom_keycodes {
@@ -78,6 +79,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         __, KC_F5, KC_F6,  KC_F7,  KC_F8,  XX,      XX, KC_LCTL, KC_LALT, KC_LGUI, __, __,
         __, KC_F9, KC_F10, KC_F11, KC_F12, XX,      XX, XX,      XX,      XX,      XX, __,
                     LAFAYETTE,   KC_SPC,   XX,      XX,   KC_SPC,   LAFAYETTE
+    ),
+
+    [_mouse_pad] = ARSENIK_LAYOUT(
+        __, __, __, __, __, __,      __,      __,      __,      __,      __,      __,
+        __, XX, XX, XX, XX, XX,      XX,      MS_BTN1, MS_BTN3, MS_BTN2, MS_ACL2, __,
+        __, XX, XX, XX, XX, XX,      MS_LEFT, MS_DOWN, MS_UP,   MS_RGHT, MS_ACL1, __,
+        __, XX, XX, XX, XX, XX,      XX,      MS_WHLD, MS_WHLU, XX,      MS_ACL0, __,
+            KC_DEL,   __,   XX,      XX,   __,   KC_ESC
     ),
 
 };
