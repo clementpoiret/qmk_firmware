@@ -80,7 +80,7 @@
 // #        define AS_TL_HOME  LSFT_T(KC_BSPC)
 // #        define AS_TR_HOME  LAFAYETTE_T(KC_SPC)
 // #    endif
-#    define AS_TL_HOME  KC_SPC
+#    define AS_TL_HOME  LT(_fun_pad, KC_SPC)
 #    define AS_TR_HOME  KC_BSPC
 #else
 #    define AS_TL_TUCK LSFT_T(KC_BSPC)

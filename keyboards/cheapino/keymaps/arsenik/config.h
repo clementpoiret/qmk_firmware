@@ -1,50 +1,27 @@
 //  ───────────────────< Basic QMK options for Arsenik >───────────────────
 
-#undef PERMISSIVE_HOLD
-/* QMK’s `PERMISSIVE_HOLD` can be some extra comfort for experienced users, but
- * can also be an absolute pain for beginners, especially if you are trying to
- * learn home-row-mods, which is why we chose to deactivate this option by
- * default.
- */
+#define ARSENIK_HRM_TAPPING_TERM 200
+#define ARSENIK_THUMB_TAPPING_TERM 150
+#define ARSENIK_QUICK_TAP_TERM 175
 
-
-#define HOLD_ON_OTHER_KEY_PRESS_PER_KEY
-/* QMK considers tap-hold actions as "tap by default" when another key is
- * pressed during the "quantum period", but some tap-holds should ideally be
- * "hold by default" to avoid this delay or accidentally pressing keys like
- * Enter or Escape.
- *
- * This option allows us to have a fine-grain controll over this behaviour.
- *
- * Arsenik provides a good default implementation of the required function
- * `get_hold_on_other_key_press` in the `keymap.c` file.
- */
-
-
+#undef TAPPING_TERM
+#define TAPPING_TERM ARSENIK_HRM_TAPPING_TERM
 #define TAPPING_TERM_PER_KEY
-/* Tap-hold actions (especially home-row-mods) may be hard to use as a
- * beginner, as it is common to hold those keys for too long and accidentally
- * use the `hold-action`.
- *
- * This option allows us to have a fine-grain controll over the `TAPPING_TERM`
- * for each tap-hold key, allowing for a longer delay on those sensitive keys
- * without slowing down the safer ones.
- *
- * Arsenik provides a good default implementation of the required function
- * `get_tapping_term` in the `keymap.c` file.
- */
+
+#define QUICK_TAP_TERM 0
+#define QUICK_TAP_TERM_PER_KEY
+
+#define FLOW_TAP_TERM 150
+#define CHORDAL_HOLD
+#define PERMISSIVE_HOLD_PER_KEY
+
+#define UNICODE_SELECTED_MODES UNICODE_MODE_LINUX
 
 
 #define ARSENIK_LAYOUT_split_3x5_3
 /* NOTE: This line gets automatically filled in by the install script, but the
  * underlying layout may not yet exist, and keyboard specific layout may have
  * other variants you might want to check out.
- */
-
-
-#define ARSENIK_HRM_TAPPING_TERM 200
-/* This is the delay used by Arsenik for sensitive tap-holds, which include
- * home-row-mods and mod-taps using the spacebar
  */
 
 
@@ -99,7 +76,8 @@
  * and navigation layers to 2 distict layers, and adds an escape key.
  *
  * Base thumb config: LSFT_T(KC_ËSC)  LT(_num_nav, KC_SPC)  RALT_T(KC_ENT)
- * Selenium: LSFT_T(KC_ESC) LT(_num_row, KC_BSPC) LT(_vim_nav, KC_SPC) RALT_T(KC_ENT)
+ * Selenium: LT(_vim_nav, KC_ESC) LT(_fun_pad, KC_SPC) LT(_mouse_pad, KC_TAB)
+ *           LT(_num_nav, KC_ENT) KC_BSPC KC_RALT
  */
 
 // #define SELENIUM_LEFT_HAND_SPACE
@@ -109,7 +87,7 @@
  * (Requires `ARSENIK_ENABLE_SELENIUM_VARIANT`)
  */
 
-#define SELENIUM_RESTORE_SPACE
+// #define SELENIUM_RESTORE_SPACE
 /* Having Space accessible to only one thumb may create some problems, especially
  * when trying to type Shift + Space or Lafayette / AltGr + Space (depending if
  * your space key is on your left or right hand). When active, backspace gets
