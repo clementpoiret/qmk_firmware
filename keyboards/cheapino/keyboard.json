@@ -32,7 +32,7 @@
         "rows": ["GP3", "GP1", "GP2", "GP0",    "GP27", "GP28", "GP29", "GP8"]
     },
     "processor": "RP2040",
-    "url": "",
+    "url": "https://github.com/tompi/cheapino",
     "usb": {
         "device_version": "1.0.1",
         "pid": "0x10B8",
