@@ -11,6 +11,14 @@ enum arsenik_layers {
     _mouse_pad,
 };
 
+enum custom_keycodes {
+    ODK_1 = SAFE_RANGE,
+    ODK_2,
+    ODK_3,
+    ODK_4,
+    ODK_5,
+};
+
 #define VOLD_MUTE LT(_base, KC_VOLD)
 
 // The ARSENIK_LAYOUT macro allows us to declare a config for a 4x6+3 keyboard, then truncate it
@@ -34,7 +42,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [_lafayette] = ARSENIK_LAYOUT(
-        __, AG(KC_1), AG(KC_2), AG(KC_3), AG(KC_4), AG(KC_5),      AG(KC_6), AG(KC_7), AG(KC_8), AG(KC_9), AG(KC_0), __,
+        __, AS(SUB1), AS(SUB2), AS(SUB3), AS(SUB4), AS(SUB5),      AS(SUB6), AS(SUB7), AS(SUB8), AS(SUB9), AS(SUB0), __,
         __, AS(CIRC), AS(LT),   AS(GT),   AS(DLR),  AS(PERC),      AS(AT),   AS(AMPR), AS(ASTR), AS(QUOT), AS(GRV),  __,
         __, AS(LCBR), AS(LPRN), AS(RPRN), AS(RCBR), AS(EQL),       AS(BSLS), AS(PLUS), AS(MINS), AS(SLSH), AS(DQUO), __,
         __, AS(TILD), AS(LBRC), AS(RBRC), AS(UNDS), AS(HASH),      AS(PIPE), AS(EXLM), AS(SCLN), AS(COLN), AS(QUES), __,
@@ -43,14 +51,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [_num_row] = ARSENIK_LAYOUT(
         __, __,    __,    __,    __,    __,         __,    __,       __,       __,      __,       __,
-        __, AS_S1, AS_S2, AS_S3, AS_S4, AS_S5,      AS_S6, AS_S7,    AS_S8,    AS_S9,   AS_S0,    __,
+        __, AS(EXLM), AS(AT), AS(HASH), AS(DLR), AS(PERC),      AS(CIRC), AS(AMPR), AS(ASTR), AS(LPRN), AS(RPRN), __,
         __, AS(1), AS(2), AS(3), AS(4), AS(5),      AS(6), AS(7),    AS(8),    AS(9),   AS(0),    __,
-        __, UC(0x201E), UC(0x201C), UC(0x201D), UC(0x00A2), UC(0x2030),      XX, AS(MINS), AS(COMM), AS(DOT), AS(SLSH), __,
+        __, ODK_1, ODK_2, ODK_3, ODK_4, ODK_5,      XX, AS(MINS), AS(COMM), AS(DOT), AS(SLSH), __,
                                      LAFAYETTE,   KC_SPC,   __,      __,   KC_BSPC,   LAFAYETTE
     ),
 
     [_vim_nav] = ARSENIK_LAYOUT(
-        __, G(KC_1),      G(KC_2),  G(KC_3),   G(KC_4),  G(KC_5), G(KC_6),  G(KC_7),  G(KC_8), G(KC_9), G(KC_0),      __,
+        __, G(AS(1)),      G(AS(2)),  G(AS(3)),   G(AS(4)),  G(AS(5)), G(AS(6)),  G(AS(7)),  G(AS(8)), G(AS(9)), G(AS(0)),      __,
         __, MO(_num_nav), C(AS(T)), KC_WBAK,   KC_WFWD,  XX,      KC_HOME,  KC_PGDN,  KC_PGUP, KC_END,  G(AS(P)),     __,
         __, C(AS(A)),     C(AS(S)), S(KC_TAB), KC_TAB,   XX,      KC_LEFT,  KC_DOWN,  KC_UP,   KC_RGHT, MO(_fun_pad), __,
         __, C(AS(Z)),     C(AS(X)), C(AS(C)),  C(AS(V)), XX,      MS_WHLL,  MS_WHLD,  MS_WHLU, MS_WHLR, XX,           __,
@@ -58,7 +66,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [_num_nav] = ARSENIK_LAYOUT(
-        __, G(KC_1),  G(KC_2),  G(KC_3),  G(KC_4),  G(KC_5),        G(KC_6),  G(KC_7),  G(KC_8), G(KC_9), G(KC_0),  __,
+        __, G(AS(1)),  G(AS(2)),  G(AS(3)),  G(AS(4)),  G(AS(5)),        G(AS(6)),  G(AS(7)),  G(AS(8)), G(AS(9)), G(AS(0)),  __,
         __, KC_TAB,   KC_HOME,  KC_UP,    KC_END,   KC_PGUP,        AS(SLSH), AS(7),    AS(8),   AS(9),   G(AS(P)), __,
         __, C(AS(A)), KC_LEFT,  KC_DOWN,  KC_RGHT,  KC_PGDN,        AS(MINS), AS(4),    AS(5),   AS(6),   AS(0),    __,
         __, C(AS(Z)), C(AS(X)), C(AS(C)), C(AS(V)), S(KC_TAB),      AS(COMM), AS(1),    AS(2),   AS(3),   AS(DOT),  __,
@@ -91,9 +99,38 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_split_
 );
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if (keycode == VOLD_MUTE && !record->tap.count && record->event.pressed) {
-        tap_code16(KC_MUTE);
-        return false;
+    switch (keycode) {
+        case ODK_1:
+            if (record->event.pressed) {
+                ODK1_SEQUENCE;
+            }
+            return false;
+        case ODK_2:
+            if (record->event.pressed) {
+                ODK2_SEQUENCE;
+            }
+            return false;
+        case ODK_3:
+            if (record->event.pressed) {
+                ODK3_SEQUENCE;
+            }
+            return false;
+        case ODK_4:
+            if (record->event.pressed) {
+                ODK4_SEQUENCE;
+            }
+            return false;
+        case ODK_5:
+            if (record->event.pressed) {
+                ODK5_SEQUENCE;
+            }
+            return false;
+        case VOLD_MUTE:
+            if (!record->tap.count && record->event.pressed) {
+                tap_code16(KC_MUTE);
+                return false;
+            }
+            break;
     }
     return true;
 }

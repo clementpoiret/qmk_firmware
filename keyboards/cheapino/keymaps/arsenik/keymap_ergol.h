@@ -35,7 +35,7 @@
 #define EL_F    KC_G    // F
 #define EL_L    KC_H    // L
 #define EL_R    KC_J    // R
-#define EL_T    KC_K    // R
+#define EL_T    KC_K    // T
 #define EL_I    KC_L    // I
 #define EL_U    KC_SCLN // U
 #define EL_QUOT KC_QUOT // '
@@ -65,7 +65,7 @@
 #define EL_HASH S(EL_9)    // #
 #define EL_AT   S(EL_0)    // @
 #define EL_UNDS S(EL_SLSH) // _
-#define EL_PLUS S(EL_EQL)  // =
+#define EL_PLUS S(EL_EQL)  // +
 #define EL_EXLM S(EL_ODK)  // !
 #define EL_LCBR S(EL_LBRC) // {
 #define EL_RCBR S(EL_RBRC) // }

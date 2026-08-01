@@ -15,9 +15,6 @@
 #define CHORDAL_HOLD
 #define PERMISSIVE_HOLD_PER_KEY
 
-#define UNICODE_SELECTED_MODES UNICODE_MODE_LINUX
-
-
 #define ARSENIK_LAYOUT_split_3x5_3
 /* NOTE: This line gets automatically filled in by the install script, but the
  * underlying layout may not yet exist, and keyboard specific layout may have
@@ -101,9 +98,9 @@
 // on keyboard layout used on your computer. If they don’t match up some
 // characters may not be correctly placed or missing entirely. If multiple
 // options are toggled at the same time, the first one is chosen.
-#define ARSENIK_HOST_LAYOUT_QWERTY
+// #define ARSENIK_HOST_LAYOUT_QWERTY
 // #define ARSENIK_HOST_LAYOUT_AZERTY
-// #define ARSENIK_HOST_LAYOUT_ERGOL
+#define ARSENIK_HOST_LAYOUT_ERGOL
 // #define ARSENIK_HOST_LAYOUT_BEPO
 // #define ARSENIK_HOST_LAYOUT_DVORAK
 // #define ARSENIK_HOST_LAYOUT_COLEMAK

@@ -21,7 +21,7 @@ void turned(bool clockwise) {
     } else if (IS_LAYER_ON(3)) {
         tap_code16(clockwise ? LCTL(KC_TAB) : LCTL(LSFT(KC_TAB)));
     } else if (IS_LAYER_ON(5)) {
-        tap_code16(clockwise ? LGUI(KC_Y) : LGUI(KC_Z));
+        tap_code16(clockwise ? LCTL(LSFT(KC_Z)) : LCTL(KC_Z));
     } else {
         tap_code16(clockwise ? KC_VOLU : KC_VOLD);
     }
