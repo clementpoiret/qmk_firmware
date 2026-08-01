@@ -28,15 +28,6 @@
 // can pick and choose them by (un)commenting the different `#define`
 // declarations.
 
-#define ARSENIK_ENABLE_LAFAYETTE_LAYER
-/* When active, gives access to the programming symbols layer used by layouts
- * like Ergo‑L and all of the "Lafayette" familly of layouts (it’s their AltGr
- * layer). The definition of this layer depends on the keyboard layout you are
- * using, so make sure to select the correct one in the list bellow.
- *
- * When inactive, this layer is discarded and replaced by AltGr.
- */
-
 #define ARSENIK_ENABLE_HRM
 /* When active, adds a Meta, Ctrl and Alt home-row-mod on respectively s/l,
  * d/k or f/j on a Qwerty keyboard. Those home-row-mods stay on those exact
@@ -58,10 +49,8 @@
  * least 6 thumb keys (so 3 per thumb) instead of 3 thumb keys total and is
  * overall a lot less efficient (especially when combining modifiers).
  *
- * Base thumb config: LSFT_T(KC_ËSC)  LT(_num_nav, KC_SPC)  RALT_T(KC_ENT)
- * When it’s active: KC_ALT  KC_CTL  KC_GUI     MO(_num_nav)  KC_SPC  KC_RALT
- * (KC_RALT becomes the `_lafayette` layer if `ARSENIK_ENABLE_LAFAYETTE_LAYER`
- * is active)
+ * Base thumb config: LSFT_T(KC_ËSC)  LT(_NUM_EDIT, KC_SPC)  RALT_T(KC_ENT)
+ * When it’s active: KC_ALT  KC_CTL  KC_GUI     MO(_NUM_EDIT)  KC_SPC  KC_RALT
  *
  * (Prevents using `ARSENIK_ENABLE_SELENIUM_VARIANT`)
  */
@@ -72,9 +61,9 @@
  * to take advantage of the extra thumb key. It does it by splitting the numbers
  * and navigation layers to 2 distict layers, and adds an escape key.
  *
- * Base thumb config: LSFT_T(KC_ËSC)  LT(_num_nav, KC_SPC)  RALT_T(KC_ENT)
- * Selenium: LT(_vim_nav, KC_ESC) LT(_fun_pad, KC_SPC) LT(_mouse_pad, KC_TAB)
- *           LT(_num_nav, KC_ENT) KC_BSPC KC_RALT
+ * Base thumb config: LSFT_T(KC_ËSC)  LT(_NUM_EDIT, KC_SPC)  RALT_T(KC_ENT)
+ * Selenium: LT(_NAV, KC_ESC) LT(_FUNCTION, KC_SPC) LT(_MOUSE, KC_TAB)
+ *           LT(_NUM_EDIT, KC_ENT) KC_BSPC KC_RALT
  */
 
 // #define SELENIUM_LEFT_HAND_SPACE
@@ -86,8 +75,8 @@
 
 // #define SELENIUM_RESTORE_SPACE
 /* Having Space accessible to only one thumb may create some problems, especially
- * when trying to type Shift + Space or Lafayette / AltGr + Space (depending if
- * your space key is on your left or right hand). When active, backspace gets
+ * when trying to type Shift + Space or AltGr + Space (depending if your space
+ * key is on your left or right hand). When active, backspace gets
  * temporarily replaced by space when the original space key is held.
  *
  * (Requires `ARSENIK_ENABLE_SELENIUM_VARIANT`)

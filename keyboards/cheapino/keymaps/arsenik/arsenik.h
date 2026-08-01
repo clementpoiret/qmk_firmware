@@ -9,15 +9,6 @@
 #define XX KC_NO
 #define __ KC_TRNS
 
-// Lafayette-layer-specific shorthand definitions
-#ifdef ARSENIK_ENABLE_LAFAYETTE_LAYER
-#    define LAFAYETTE MO(_lafayette)
-#    define LAFAYETTE_T(keycode) LT(_lafayette, keycode)
-#else
-#    define LAFAYETTE KC_RALT
-#    define LAFAYETTE_T(keycode) RALT_T(keycode)
-#endif
-
 // TODO: find better names for those macros ?
 #ifdef ARSENIK_MAC_MODIFIERS
 #    define _GUI_T LALT_T
@@ -64,31 +55,23 @@
 #    define AS_TL_TUCK  _ALT
 #    define AS_TL_HOME  _CTL
 #    define AS_TL_REACH _GUI
-#    define AS_TR_REACH MO(_num_nav)
+#    define AS_TR_REACH MO(_NUM_EDIT)
 #    define AS_TR_HOME  KC_SPC
-#    define AS_TR_TUCK  LAFAYETTE
+#    define AS_TR_TUCK  KC_RALT
 #elif defined ARSENIK_ENABLE_SELENIUM_VARIANT
-#    define AS_TL_REACH LT(_mouse_pad, KC_TAB)
-#    define AS_TR_REACH LT(_num_nav, KC_ENT)
-#    define AS_TL_TUCK  LT(_vim_nav, KC_ESC)
-// #    define AS_TR_TUCK  LT(_num_row, KC_ENT)
-#    define AS_TR_TUCK  KC_ALGR
-// #    if defined SELENIUM_LEFT_HAND_SPACE
-// #        define AS_TL_HOME  LSFT_T(KC_SPC)
-// #        define AS_TR_HOME  LAFAYETTE_T(KC_BSPC)
-// #    else
-// #        define AS_TL_HOME  LSFT_T(KC_BSPC)
-// #        define AS_TR_HOME  LAFAYETTE_T(KC_SPC)
-// #    endif
-#    define AS_TL_HOME  LT(_fun_pad, KC_SPC)
+#    define AS_TL_REACH LT(_MOUSE, KC_TAB)
+#    define AS_TR_REACH LT(_NUM_EDIT, KC_ENT)
+#    define AS_TL_TUCK  LT(_NAV, KC_ESC)
+#    define AS_TR_TUCK  KC_RALT
+#    define AS_TL_HOME  LT(_FUNCTION, KC_SPC)
 #    define AS_TR_HOME  KC_BSPC
 #else
 #    define AS_TL_TUCK LSFT_T(KC_BSPC)
-#    define AS_TL_HOME LT(_num_nav, KC_BSPC)
+#    define AS_TL_HOME LT(_NUM_EDIT, KC_BSPC)
 #    define AS_TL_REACH XX
 #    define AS_TR_REACH XX
 #    define AS_TR_HOME AS_TL_HOME
-#    define AS_TR_TUCK LAFAYETTE_T(KC_ENT)
+#    define AS_TR_TUCK RALT_T(KC_ENT)
 #endif
 
 // ╭─────────────────────────────────────────────────────────╮
@@ -105,11 +88,6 @@
 #elif defined ARSENIK_HOST_LAYOUT_ERGOL
 #    define AS(stripped_keycode) EL_##stripped_keycode
 #    include "keymap_ergol.h"
-#    define ODK1_SEQUENCE tap_code(EL_ODK); tap_code(KC_1)
-#    define ODK2_SEQUENCE tap_code(EL_ODK); tap_code(KC_2)
-#    define ODK3_SEQUENCE tap_code(EL_ODK); tap_code(KC_3)
-#    define ODK4_SEQUENCE tap_code(EL_ODK); tap_code(KC_4)
-#    define ODK5_SEQUENCE tap_code(EL_ODK); tap_code(KC_5)
 #elif defined ARSENIK_HOST_LAYOUT_BEPO
 #    define AS(stripped_keycode) BE_##stripped_keycode
 #    define SHIFTED_NUMBERS
@@ -130,23 +108,6 @@
 #else
 #    error "No `ARSENIK_HOST_LAYOUT_*` option was found or recognised"
 #endif
-
-#ifndef ODK1_SEQUENCE
-#    define ODK1_SEQUENCE tap_code(KC_NO)
-#endif
-#ifndef ODK2_SEQUENCE
-#    define ODK2_SEQUENCE tap_code(KC_NO)
-#endif
-#ifndef ODK3_SEQUENCE
-#    define ODK3_SEQUENCE tap_code(KC_NO)
-#endif
-#ifndef ODK4_SEQUENCE
-#    define ODK4_SEQUENCE tap_code(KC_NO)
-#endif
-#ifndef ODK5_SEQUENCE
-#    define ODK5_SEQUENCE tap_code(KC_NO)
-#endif
-
 
 #ifdef SHIFTED_NUMBERS
 #    define AS_S0  KC_0
