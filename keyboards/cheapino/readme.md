@@ -28,21 +28,22 @@ keyboard. Build and flash **one UF2 file**, not separate left and right images.
 | Lighting | One WS2812 RGB LED on `GP16` |
 | Matrix | Custom bidirectional scanner with Cheapino-specific ghost suppression |
 | USB identity | VID `0xFEE3`, PID `0x10B8`, device version `1.0.1` |
-| Enabled features | Bootmagic, extra/media keys, Mouse Keys, Repeat Key, NKRO support, RGB Light, and deferred execution |
-| Disabled features | Caps Word in the Arsenik keymap, Command, and Console |
+| Enabled features | Bootmagic, extra/media keys, Mouse Keys, Repeat Key, NKRO support, encoder maps, RGB Light, and deferred execution |
+| Optional diagnostic feature | QMK Console, enabled only through a build override |
+| Disabled features | Caps Word in the Arsenik keymap and Command |
 
-The keyboard supports NKRO, but does not request NKRO as the host default. The
-current metadata still expresses that with the obsolete
-`"usb.force_nkro": false` field; replacing it with the current host-default
-metadata is listed in [Potential enhancements](#potential-enhancements).
+The keyboard supports NKRO, but `host.default.nkro` keeps the host default at
+6KRO. The firmware remains NKRO-capable if a keymap later exposes its toggle.
 
 ## Arsenik keymap
 
 The keymap is derived from OneDeadKey's original
-[Arsenik project](https://github.com/OneDeadKey/arsenik). The active
-configuration is its Selenium variant for `LAYOUT_split_3x5_3`. Base keys emit
-QWERTY positions for Linux XKB Ergo-L; non-base characters and shortcuts use
-Ergo-L semantic aliases.
+[Arsenik project](https://github.com/OneDeadKey/arsenik). It fixes the variant
+to eight home-row mods and six Selenium-style thumbs on
+`LAYOUT_split_3x5_3`, without retaining inactive options for unrelated boards
+or host layouts. Base keys emit QWERTY positions for Linux XKB Ergo-L;
+non-base characters and shortcuts use the subset of Ergo-L 1.0.0 aliases that
+the keymap actually needs.
 
 In the diagrams below:
 
@@ -92,7 +93,7 @@ thumb to return to Base.
 | 2 | NUM_EDIT | Hold Enter, or toggle from `SYSTEM` | Digits, arithmetic, punctuation, navigation, and word editing |
 | 3 | FUNCTION | Hold Space | Function keys, media, brightness, sticky modifiers, and ASCII Space |
 | 4 | MOUSE | Hold Tab, or toggle from `SYSTEM` | Pointer movement, scrolling, buttons, and speed selection |
-| 5 | SYSTEM | From FUNCTION, hold the right outer thumb | Caps Lock, Compose, and guarded layer toggles |
+| 5 | SYSTEM | From FUNCTION, hold the right outer thumb | Bootloader, diagnostics, Caps Lock, Compose, and guarded layer toggles |
 
 Programming symbols are provided by native Ergo-L AltGr through the plain
 right-Alt thumb. `FUNCTION` provides one-shot AltGr and Shift; each remains
@@ -150,16 +151,19 @@ layer, and `Mouse/Unlock` releases a mouse-layer toggle.
 ### SYSTEM
 
 ```text
- x  x  x  x  x   | CapsLock  Compose  x  x  x
- x  x  x  x  x   | NumEditLock  x        x  x  MouseLock
- x  x  x  x  x   | x         x        x  x  x
-             x  x  x          | x  x  x
+ Bootloader Diagnostics x x x | CapsLock     Compose x x x
+ x          x           x x x | NumEditLock  x       x x MouseLock
+ x          x           x x x | x            x       x x x
+                    x  x  x   | x  x  x
 ```
 
 `Compose` sends the Application/Menu key. On Linux XKB, configure
 `compose:menu` so that key starts a Compose sequence. `NumEditLock` and
 `MouseLock` toggle their layers with no idle timeout or persistent visual
 indicator; use the access thumb shown on the locked layer to unlock it.
+`Bootloader` is deliberately behind the two-step SYSTEM gesture. `Diagnostics`
+is present only in a Console-enabled build and is disabled in the normal
+release build.
 
 ## Tap-hold behavior
 
@@ -197,15 +201,51 @@ on the active layer:
 
 | Active layer | Counter-clockwise | Clockwise |
 | --- | --- | --- |
+| BASE | Volume Down | Volume Up |
 | NAV | Ctrl+Shift+Tab | Ctrl+Tab |
+| NUM_EDIT | Volume Down | Volume Up |
 | FUNCTION | Ctrl+Z | Ctrl+Shift+Z |
-| Base and all other layers | Volume Down | Volume Up |
+| MOUSE | Wheel Down | Wheel Up |
+| SYSTEM | Volume Down | Volume Up |
 
 The encoder is connected through the custom keyboard matrix rather than QMK's
-normal dedicated encoder pins. Its current implementation reads raw matrix
-state before QMK's debounce stage and embeds the NAV and FUNCTION layer numbers
-in keyboard-level code. The proposed test and refactor work is described under
-[Potential enhancements](#potential-enhancements).
+normal dedicated encoder pins. The board driver extracts only its A/B contacts,
+uses a full-step quadrature state table, and sends completed detents through
+QMK's normal encoder event and keymap pipelines. Layer behavior therefore lives
+in `encoder_map` beside the keymap instead of depending on board-level numeric
+layer IDs. The push button remains in the ordinary matrix debounce path and
+generates one callback for each stable press or release.
+
+## Matrix and ghost diagnostics
+
+Cheapino's bidirectional, diode-free matrix needs ten historical suppression
+rules. Each rule is applied to all ordered row pairs on the right half and is
+mirrored six columns higher on the left half:
+
+| Rule | Cause mask | Observed mask | Cleared phantom bit |
+| --- | --- | --- | --- |
+| 1 | `0x006` | `0x005` | `0x004` |
+| 2 | `0x006` | `0x00A` | `0x002` |
+| 3 | `0x018` | `0x014` | `0x010` |
+| 4 | `0x018` | `0x028` | `0x008` |
+| 5 | `0x021` | `0x011` | `0x001` |
+| 6 | `0x021` | `0x022` | `0x020` |
+| 7 | `0x009` | `0x00A` | `0x008` |
+| 8 | `0x009` | `0x005` | `0x001` |
+| 9 | `0x012` | `0x022` | `0x002` |
+| 10 | `0x012` | `0x011` | `0x010` |
+
+The firmware cannot distinguish a phantom from a legitimate switch that
+produces the same complete matrix state, so these exact ambiguous patterns
+retain the original suppression policy. Unit tests preserve all ten rules on
+both halves and verify that unrelated bits survive. Physical chord validation
+is still required on real hardware.
+
+A Console-enabled build logs raw matrix changes, applied ghost rules, encoder
+transitions, encoder-button edges, and QMK tap-hold decisions. On `SYSTEM`, tap
+`Diagnostics` to toggle those logs, then run `qmk console` on the host. The
+diagnostics report transitions only; they do not change the release firmware's
+input policy.
 
 ## RGB behavior
 
@@ -214,9 +254,8 @@ startup it performs a non-blocking 2.5-second hue sweep, then restores the color
 that was active before the animation. Layer colors are intentionally disabled;
 an earlier implementation was found distracting.
 
-The current animation uses the EEPROM-writing RGB setter for every frame. That
-does not affect the intended appearance, but it causes unnecessary persistent
-writes and is the first item in the enhancement backlog.
+The sweep and restoration use QMK's no-EEPROM RGB setter, so the animation does
+not persist any of its intermediate frames or add flash wear at startup.
 
 ## Set up the build environment
 
@@ -276,6 +315,18 @@ To force a clean rebuild:
 qmk compile -c -kb cheapino -km arsenik
 ```
 
+For hardware troubleshooting, build the opt-in diagnostic profile and connect
+QMK Console:
+
+```sh
+qmk compile -c -kb cheapino -km arsenik -e CONSOLE_ENABLE=yes
+qmk console
+```
+
+The diagnostic build uses the same `cheapino_arsenik.uf2` filename as the
+release build. After testing, run the normal clean-build command again before
+flashing a release image.
+
 The legacy/default keymap can still be built separately:
 
 ```sh
@@ -324,26 +375,30 @@ Use any available method:
 - **Double-tap reset:** Quickly press the controller's reset control twice. The
   selected `GENERIC_PROMICRO_RP2040` platform enables QMK's 200 ms double-tap
   bootloader window.
+- **Guarded key:** Hold Space for `FUNCTION`, hold the right outer thumb for
+  `SYSTEM`, then tap the physical `Q` position.
 - **Physical reset/boot controls:** Use the controller or PCB boot procedure
   documented by the hardware build if it exposes different controls.
 
-The Arsenik keymap does not currently map `QK_BOOT`. Bootmagic, BOOTSEL, and
-double-tap reset remain available without a keymap-level boot key.
+The guarded key sends `QK_BOOT`; it is intentionally unreachable from Base in
+a single press. Bootmagic, BOOTSEL, and double-tap reset remain independent
+recovery paths.
 
 ## Files to edit
 
 | Path | Purpose |
 | --- | --- |
-| `keyboards/cheapino/keymaps/arsenik/keymap.c` | Layers, encoder-related layer names, shortcuts, and tap-hold callbacks |
+| `keyboards/cheapino/keymaps/arsenik/keymap.c` | Layers, encoder map, guarded controls, shortcuts, and tap-hold callbacks |
 | `keyboards/cheapino/keymaps/arsenik/config.h` | Arsenik options and timing constants |
 | `keyboards/cheapino/keymaps/arsenik/rules.mk` | Arsenik-only QMK features |
 | `keyboards/cheapino/keyboard.json` | Hardware metadata, matrix pins, USB identity, and layout |
-| `keyboards/cheapino/config.h` | Board-wide RGB, Caps Word, and timing defaults |
+| `keyboards/cheapino/config.h` | Board-wide RGB and encoder constants |
 | `keyboards/cheapino/rules.mk` | Board-wide features and custom source files |
 | `keyboards/cheapino/matrix.c` | Bidirectional custom matrix scan |
 | `keyboards/cheapino/ghosting.c` | Hardware-specific ghost suppression |
-| `keyboards/cheapino/encoder.c` | Matrix-connected encoder decoding and actions |
-| `keyboards/cheapino/cheapino.c` | Startup RGB animation |
+| `keyboards/cheapino/matrix_encoder.c` | Matrix-connected encoder driver and debounced button hook |
+| `keyboards/cheapino/cheapino.c` | Board hooks and startup RGB animation |
+| `tests/cheapino/test_cheapino.cpp` | Ghost-suppression and encoder regression tests |
 
 After any keymap or configuration change, run a clean Arsenik build and inspect
 the generated UF2:
@@ -353,69 +408,20 @@ qmk compile -c -kb cheapino -km arsenik
 ls -l cheapino_arsenik.uf2 .build/cheapino_arsenik.uf2
 ```
 
-## Potential enhancements
+## Remaining hardware validation
 
-The items below are proposals discovered while reviewing the current QMK
-features and Cheapino implementation. **They are not implemented yet.** Changes
-that affect input timing or the encoder require physical keyboard testing in
-addition to successful compilation.
+Compilation and unit tests cannot reproduce the electrical behavior of the
+diode-free PCB. Before treating the input refactor as hardware-validated, use a
+diagnostic build on a Cheapino v2 to check:
 
-| Priority | Enhancement | Proposed outcome | Effort / change risk |
-| --- | --- | --- | --- |
-| 1 | Stop the RGB animation from persisting every frame | Use `rgblight_sethsv_noeeprom()` during the sweep and restoration, avoiding roughly 51 logical EEPROM writes per boot | Small / low |
-| 2 | Trial constrained Speculative Hold | Apply Shift/Ctrl immediately for responsive Shift+click and Ctrl+scroll, while retaining the current tap-hold decisions | Small / medium |
-| 3 | Test and modernize the encoder path | Characterize current behavior, debounce the button and quadrature transitions, and move layer actions out of hard-coded keyboard-level layer numbers | Medium / medium |
-| 4 | Calibrate tap-hold timings dynamically | Use a temporary Dynamic Tapping Term build to measure QMK-specific HRM and thumb timings, then bake in the chosen constants and remove the controls | Small / low |
-| 5 | Tune Mouse Keys | Trial a 16 ms movement interval for a 60 Hz display and reduce maximum speed proportionally; keep accelerated mode unless another mode proves better in use | Small / low-medium |
-| 6 | Migrate the NKRO default metadata | Remove obsolete `usb.force_nkro`; express `host.default.nkro: false` with current QMK metadata, and do not enable default-on NKRO without a demonstrated greater-than-6-key chord | Small / low |
+1. One clockwise and counter-clockwise event per detent at slow and fast speeds.
+2. One Mute action per encoder-button release, including noisy presses.
+3. Nearby key chords while rotating or pressing the encoder.
+4. Each logged ghost-rule activation against the intended physical chord, plus
+   legitimate chords that share rows or columns with the ten masks.
 
-### Speculative Hold trial
-
-The initial experiment should be limited to QMK's default Shift/Ctrl mod-taps
-and use the safeguards added by current QMK:
-
-```c
-#define SPECULATIVE_HOLD
-#define SPECULATIVE_HOLD_ONE_KEY
-#define SPECULATIVE_HOLD_FLOW_TERM 150
-```
-
-This is most relevant to the `D`, `F`, `J`, and `K` home-row mods when combined
-with mouse buttons or wheel keys. The trial must check for "flashing mods,"
-where an application reacts to a modifier press and release that was ultimately
-resolved as a tap.
-
-### Encoder dependency order
-
-Characterization tests must land before the encoder refactor. They should cover
-clockwise and counter-clockwise transitions, bounce, skipped transitions,
-button press/release bounce, every layer action, all ghost-suppression patterns,
-and nearby legitimate key chords. After that baseline exists, the hardware code
-can expose a keymap-level hook so Arsenik uses named layers instead of raw
-numbers.
-
-### Timing calibration
-
-Dynamic Tapping Term should be a temporary diagnostic build, not permanent UI.
-Place `DT_UP`, `DT_DOWN`, and `DT_PRNT` in unused positions, make the per-key
-callback honor `g_tapping_term`, test real typing and layer entry, record the
-selected HRM/thumb values, then remove the diagnostic feature.
-
-### Mouse Keys
-
-Mouse tuning is subjective: compare the current 20 ms accelerated default
-against a 16 ms interval on the actual host, while lowering
-`MOUSEKEY_MAX_SPEED` enough to keep the same usable range. The implemented
-Slow/normal/Fast selection should remain available during that trial.
-
-### Recommended implementation order
-
-1. Fix the RGB animation's persistent writes.
-2. Add characterization tests, then refactor the encoder.
-3. Independently trial constrained Speculative Hold.
-4. Use a temporary build to calibrate tap-hold timings.
-5. Tune Mouse Keys on the physical keyboard.
-6. Migrate the obsolete NKRO metadata without turning NKRO on by default.
+Speculative Hold, dynamic tap-hold calibration, and Mouse Keys tuning remain
+separate usability experiments; they are not part of this hardware refactor.
 
 ## Troubleshooting
 

@@ -1,5 +1,8 @@
-//
-// Created by Thomas Haukland on 2024-05-05.
-//
+// Copyright 2024 Thomas Haukland (@tompi)
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-void fix_ghosting(matrix_row_t current_matrix[]);
+#pragma once
+
+#include "matrix.h"
+
+void cheapino_suppress_ghosts(matrix_row_t current_matrix[]);

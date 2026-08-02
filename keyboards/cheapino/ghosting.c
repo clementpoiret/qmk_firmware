@@ -1,128 +1,78 @@
-//
-// Created by Thomas Haukland on 2024-05-05.
-//
+// Copyright 2024 Thomas Haukland (@tompi)
+// Copyright 2026 Clement Poiret (@clementpoiret)
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-#include "matrix.h"
-#include "quantum.h"
-#include "print.h"
+#include "ghosting.h"
 
-// This is just to be able to declare constants as they appear in the qmk console
-#define rev(b) \
-            ((b & 1) << 15) | \
-            ((b & (1 << 1)) << 13) | \
-            ((b & (1 << 2)) << 11) | \
-            ((b & (1 << 3)) << 9) | \
-            ((b & (1 << 4)) << 7) | \
-            ((b & (1 << 5)) << 5) | \
-            ((b & (1 << 6)) << 3) | \
-            ((b & (1 << 7)) << 1) | \
-            ((b & (1 << 8)) >> 1) | \
-            ((b & (1 << 9)) >> 3) | \
-            ((b & (1 << 10)) >> 5) | \
-            ((b & (1 << 11)) >> 7) | \
-            ((b & (1 << 12)) >> 9) | \
-            ((b & (1 << 13)) >> 11) | \
-            ((b & (1 << 14)) >> 13) | \
-            b >> 15
+#include <stdbool.h>
+#include <stdint.h>
 
-/* This is for debugging the matrix rows
-void printBits(uint16_t n)
-{
-    long i;
-    for (i = 15; i >= 0; i--) {
-        if ((n & (1 << i)) != 0) {
-            printf("1");
+#include "util.h"
+
+#ifdef CONSOLE_ENABLE
+#    include "debug.h"
+#    include "print.h"
+#endif
+
+typedef struct {
+    matrix_row_t cause;
+    matrix_row_t observed;
+    matrix_row_t phantom;
+} ghost_pattern_t;
+
+// These ten rules preserve the Cheapino v2 patterns observed by the original
+// firmware. Each rule is mirrored to the left-hand columns by shifting six
+// positions. The scanner cannot distinguish a phantom from the same complete
+// matrix state produced by legitimate switches.
+static const ghost_pattern_t ghost_patterns[] = {
+    {.cause = 0x006, .observed = 0x005, .phantom = 0x004},
+    {.cause = 0x006, .observed = 0x00A, .phantom = 0x002},
+    {.cause = 0x018, .observed = 0x014, .phantom = 0x010},
+    {.cause = 0x018, .observed = 0x028, .phantom = 0x008},
+    {.cause = 0x021, .observed = 0x011, .phantom = 0x001},
+    {.cause = 0x021, .observed = 0x022, .phantom = 0x020},
+    {.cause = 0x009, .observed = 0x00A, .phantom = 0x008},
+    {.cause = 0x009, .observed = 0x005, .phantom = 0x001},
+    {.cause = 0x012, .observed = 0x022, .phantom = 0x002},
+    {.cause = 0x012, .observed = 0x011, .phantom = 0x010},
+};
+
+static bool has_all_bits(matrix_row_t value, matrix_row_t pattern) {
+    return (value & pattern) == pattern;
+}
+
+static void apply_ghost_pattern(matrix_row_t matrix[], uint8_t pattern_id, uint8_t row_offset, uint8_t column_shift) {
+    const ghost_pattern_t *pattern  = &ghost_patterns[pattern_id];
+    const matrix_row_t     cause    = pattern->cause << column_shift;
+    const matrix_row_t     observed = pattern->observed << column_shift;
+    const matrix_row_t     phantom  = pattern->phantom << column_shift;
+
+    for (uint8_t cause_row = 0; cause_row < 3; cause_row++) {
+        const uint8_t absolute_cause_row = row_offset + cause_row;
+        if (!has_all_bits(matrix[absolute_cause_row], cause)) {
+            continue;
         }
-        else {
-            printf("0");
-        }
-    }
-    printf("\n");
-}
-*/
 
-bool bit_pattern_set(uint16_t number, uint16_t bitPattern) {
-    return !(~number & bitPattern);
-}
+        for (uint8_t row_delta = 1; row_delta < 3; row_delta++) {
+            const uint8_t observed_row          = (cause_row + row_delta) % 3;
+            const uint8_t absolute_observed_row = row_offset + observed_row;
+            if (!has_all_bits(matrix[absolute_observed_row], observed)) {
+                continue;
+            }
 
-void fix_ghosting_instance(
-        matrix_row_t current_matrix[],
-        unsigned short row_num_with_possible_error_cause,
-        uint16_t possible_error_cause,
-        unsigned short row_num_with_possible_error,
-        uint16_t possible_error,
-        uint16_t error_fix) {
-    if (bit_pattern_set(current_matrix[row_num_with_possible_error_cause], possible_error_cause)) {
-        if (bit_pattern_set(current_matrix[row_num_with_possible_error], possible_error)) {
-            current_matrix[row_num_with_possible_error] = current_matrix[row_num_with_possible_error] ^ error_fix;
+            matrix[absolute_observed_row] &= ~phantom;
+#ifdef CONSOLE_ENABLE
+            if (debug_enable && debug_matrix) {
+                dprintf("cheapino ghost: pattern=%u side=%c cause=r%u observed=r%u clear=%04X\n", pattern_id + 1, row_offset == 0 ? 'R' : 'L', absolute_cause_row, absolute_observed_row, phantom);
+            }
+#endif
         }
     }
 }
 
-void fix_ghosting_column(
-        matrix_row_t matrix[],
-        uint16_t possible_error_cause,
-        uint16_t possible_error,
-        uint16_t error_fix) {
-    // First the right side
-    for (short i = 0; i<3; i++) {
-        fix_ghosting_instance(matrix, i, possible_error_cause, (i+1)%3, possible_error, error_fix);
-        fix_ghosting_instance(matrix, i, possible_error_cause, (i+2)%3, possible_error, error_fix);
+void cheapino_suppress_ghosts(matrix_row_t matrix[]) {
+    for (uint8_t pattern_id = 0; pattern_id < ARRAY_SIZE(ghost_patterns); pattern_id++) {
+        apply_ghost_pattern(matrix, pattern_id, 0, 0);
+        apply_ghost_pattern(matrix, pattern_id, 4, 6);
     }
-
-    // Then exactly same procedure on the left side
-    for (short i = 0; i<3; i++) {
-        fix_ghosting_instance(matrix, i+4, possible_error_cause<<6, 4+((i+1)%3), possible_error<<6, error_fix<<6);
-        fix_ghosting_instance(matrix, i+4, possible_error_cause<<6, 4+((i+2)%3), possible_error<<6, error_fix<<6);
-    }
-}
-
-// For QWERTY layout, key combo a+s+e also outputs q. This suppresses the q, and other similar ghosts
-// These are observed ghosts(following a pattern). TODO: need to fix this for v3
-// Might need to add 2 diodes(one in each direction) for every row, to increase voltage drop.
-void fix_ghosting(matrix_row_t matrix[]) {
-    fix_ghosting_column(matrix,
-                        rev(0B0110000000000000),
-                        rev(0B1010000000000000),
-                        rev(0B0010000000000000));
-    fix_ghosting_column(matrix,
-                        rev(0B0110000000000000),
-                        rev(0B0101000000000000),
-                        rev(0B0100000000000000));
-
-    fix_ghosting_column(matrix,
-                        rev(0B0001100000000000),
-                        rev(0B0010100000000000),
-                        rev(0B0000100000000000));
-    fix_ghosting_column(matrix,
-                        rev(0B0001100000000000),
-                        rev(0B0001010000000000),
-                        rev(0B0001000000000000));
-
-    fix_ghosting_column(matrix,
-                        rev(0B1000010000000000),
-                        rev(0B1000100000000000),
-                        rev(0B1000000000000000));
-    fix_ghosting_column(matrix,
-                        rev(0B1000010000000000),
-                        rev(0B0100010000000000),
-                        rev(0B0000010000000000));
-
-    fix_ghosting_column(matrix,
-                        rev(0B1001000000000000),
-                        rev(0B0101000000000000),
-                        rev(0B0001000000000000));
-    fix_ghosting_column(matrix,
-                        rev(0B1001000000000000),
-                        rev(0B1010000000000000),
-                        rev(0B1000000000000000));
-
-    fix_ghosting_column(matrix,
-                        rev(0B0100100000000000),
-                        rev(0B0100010000000000),
-                        rev(0B0100000000000000));
-    fix_ghosting_column(matrix,
-                        rev(0B0100100000000000),
-                        rev(0B1000100000000000),
-                        rev(0B0000100000000000));
 }

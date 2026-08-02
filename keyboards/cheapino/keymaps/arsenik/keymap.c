@@ -1,5 +1,15 @@
+// Copyright 2026 Clement Poiret (@clementpoiret)
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #include QMK_KEYBOARD_H
+
 #include "arsenik.h"
+#include "matrix_encoder.h"
+
+#ifdef CONSOLE_ENABLE
+#    include "debug.h"
+#    include "print.h"
+#endif
 
 enum arsenik_layers {
     _BASE,
@@ -12,18 +22,17 @@ enum arsenik_layers {
 
 enum custom_keycodes {
     ASCII_SPACE = SAFE_RANGE,
+    CHEAPINO_DIAG,
 };
 
-// The ARSENIK_LAYOUT macro allows us to declare a config for a 4x6+3 keyboard, then truncate it
-// (or fill it with noops) depending on the size of your keyboard. Your keyboard may have extra
-// definitions for this macro or none at all (preventing you from compiling the keymap). Check
-// the `README.md` file for more information.
-//
-// A comprehensive list of QMK keycodes is available here: https://docs.qmk.fm/keycodes
-// However, we used a many aliases to automatically adapt the keymap depending on the options you
-// enabled in the `config.h` file (or just to have some syntaxic sugar). You can find all of them
-// in the `arsenik.h` file. Feel free to remove those aliases and replace them with their actual
-// value if you need something Arsenik doesn’t provide.
+#ifdef CONSOLE_ENABLE
+#    define CK_DIAG CHEAPINO_DIAG
+#else
+#    define CK_DIAG KC_NO
+#endif
+
+// ARSENIK_LAYOUT keeps the source keymap in its original 4x6+3 shape and
+// selects the physical 3x5+3 positions used by Cheapino.
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [_BASE] = ARSENIK_LAYOUT(
@@ -68,12 +77,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [_SYSTEM] = ARSENIK_LAYOUT(
         XX, XX, XX, XX, XX, XX,      XX, XX, XX, XX, XX, XX,
-        XX, XX, XX, XX, XX, XX,      KC_CAPS, KC_APP, XX, XX, XX, XX,
+        XX, QK_BOOT, CK_DIAG, XX, XX, XX,      KC_CAPS, KC_APP, XX, XX, XX, XX,
         XX, XX, XX, XX, XX, XX,      TG(_NUM_EDIT), XX, XX, XX, TG(_MOUSE), XX,
         XX, XX, XX, XX, XX, XX,      XX, XX, XX, XX, XX, XX,
                     XX, XX, XX,      XX, XX, XX
     ),
 
+};
+
+const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
+    [_BASE]     = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
+    [_NAV]      = {ENCODER_CCW_CW(C(S(KC_TAB)), C(KC_TAB))},
+    [_NUM_EDIT] = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
+    [_FUNCTION] = {ENCODER_CCW_CW(C(AS(Z)), C(S(AS(Z))))},
+    [_MOUSE]    = {ENCODER_CCW_CW(MS_WHLD, MS_WHLU)},
+    [_SYSTEM]   = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
 };
 
 const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_split_3x5_3(
@@ -112,8 +130,25 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 tap_ascii_space();
             }
             return false;
+#ifdef CONSOLE_ENABLE
+        case CHEAPINO_DIAG:
+            if (record->event.pressed) {
+                const bool enabled = !(debug_enable && debug_matrix);
+                debug_enable       = enabled;
+                debug_matrix       = enabled;
+                dprintf("cheapino diagnostics: %s\n", enabled ? "on" : "off");
+            }
+            return false;
+#endif
     }
     return true;
+}
+
+bool cheapino_encoder_button_update_user(bool pressed) {
+    if (!pressed) {
+        tap_code(KC_MUTE);
+    }
+    return false;
 }
 
 uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {

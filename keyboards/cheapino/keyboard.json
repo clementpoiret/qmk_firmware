@@ -3,14 +3,16 @@
     "keyboard_name": "cheapino2",
     "maintainer": "tompi",
     "bootloader": "rp2040",
-    "diode_direction": "ROW2COL",
     "features": {
         "bootmagic": true,
-        "command": false,
-        "console": false,
         "extrakey": true,
         "mousekey": true,
         "nkro": true
+    },
+    "host": {
+        "default": {
+            "nkro": false
+        }
     },
     "community_layouts": ["split_3x5_3"],
     "matrix_pins": {
@@ -36,8 +38,7 @@
     "usb": {
         "device_version": "1.0.1",
         "pid": "0x10B8",
-        "vid": "0xFEE3",
-        "force_nkro": false
+        "vid": "0xFEE3"
     },
     "layouts": {
         "LAYOUT_split_3x5_3": {

@@ -24,9 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "matrix.h"
 #include "config.h"
 #include "quantum.h"
-#include "debounce.h"
 #include "gpio.h"
-#include "encoder.h"
+#include "matrix_encoder.h"
 #include "ghosting.h"
 #include "print.h"
 
@@ -40,6 +39,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static const pin_t row_pins[] = MATRIX_ROW_PINS;
 static const pin_t col_pins[] = MATRIX_COL_PINS;
 static matrix_row_t previous_matrix[MATRIX_ROWS];
+
+#ifdef CONSOLE_ENABLE
+static matrix_row_t previous_unfiltered_matrix[MATRIX_ROWS];
+
+static void log_unfiltered_matrix_changes(const matrix_row_t current_matrix[]) {
+    if (!debug_enable || !debug_matrix) {
+        return;
+    }
+
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        if (previous_unfiltered_matrix[row] != current_matrix[row]) {
+            dprintf("cheapino raw matrix: r%u %04X -> %04X\n", row, previous_unfiltered_matrix[row], current_matrix[row]);
+            previous_unfiltered_matrix[row] = current_matrix[row];
+        }
+    }
+}
+#endif
 
 static void select_row(uint8_t row) {
     gpio_set_pin_output(row_pins[row]);
@@ -117,16 +133,15 @@ void matrix_init_custom(void) {
     // initialize key pins
     unselect_cols();
     unselect_rows();
-    debounce_init();
 }
 
-void store_old_matrix(matrix_row_t current_matrix[]) {
+static void store_old_matrix(matrix_row_t current_matrix[]) {
     for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
         previous_matrix[i] = current_matrix[i];
     }
 }
 
-bool has_matrix_changed(matrix_row_t current_matrix[]) {
+static bool has_matrix_changed(matrix_row_t current_matrix[]) {
     for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
         if (previous_matrix[i] != current_matrix[i]) return true;
     }
@@ -144,9 +159,13 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
         read_rows_on_col(current_matrix, current_col);
     }
 
-    fix_encoder_action(current_matrix);
+#ifdef CONSOLE_ENABLE
+    log_unfiltered_matrix_changes(current_matrix);
+#endif
 
-    fix_ghosting(current_matrix);
+    cheapino_encoder_capture(current_matrix);
+
+    cheapino_suppress_ghosts(current_matrix);
 
     return has_matrix_changed(current_matrix);
 }
