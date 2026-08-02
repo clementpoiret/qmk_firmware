@@ -28,8 +28,8 @@ keyboard. Build and flash **one UF2 file**, not separate left and right images.
 | Lighting | One WS2812 RGB LED on `GP16` |
 | Matrix | Custom bidirectional scanner with Cheapino-specific ghost suppression |
 | USB identity | VID `0xFEE3`, PID `0x10B8`, device version `1.0.1` |
-| Enabled features | Bootmagic, Caps Word, extra/media keys, Mouse Keys, NKRO support, RGB Light, and deferred execution |
-| Disabled features | Command and Console |
+| Enabled features | Bootmagic, extra/media keys, Mouse Keys, Repeat Key, NKRO support, RGB Light, and deferred execution |
+| Disabled features | Caps Word in the Arsenik keymap, Command, and Console |
 
 The keyboard supports NKRO, but does not request NKRO as the host default. The
 current metadata still expresses that with the obsolete
@@ -79,29 +79,32 @@ The thumb keys are:
 
 ### Layer overview
 
-Layers are momentary. Hold their access key, use the layer, and release it to
-return. `NUM_EDIT` is directly available from Enter. `SYSTEM` uses a guarded
-two-step gesture: hold Space for `FUNCTION`, then hold the right outer thumb.
+The four work layers are available momentarily from their Base thumb. `SYSTEM`
+uses a guarded two-step gesture: hold Space for `FUNCTION`, then hold the right
+outer thumb. From `SYSTEM`, `NUM_EDIT` and `MOUSE` can also be toggled for
+sustained work. These locks have no timeout; tap the locked layer's access
+thumb to return to Base.
 
 | # | Layer | Access | Purpose |
 | --- | --- | --- | --- |
 | 0 | BASE | Default | Positional QWERTY, home-row mods, and thumb tap-holds |
-| 1 | NAV | Hold Escape | Navigation, browser controls, editing shortcuts, and scrolling |
-| 2 | NUM_EDIT | Hold Enter, or use `NUM_EDIT` from NAV | Digits, arithmetic, punctuation, navigation, and word editing |
-| 3 | FUNCTION | Hold Space, or use `FUNCTION` from NAV | Function keys, media, brightness, and explicit modifiers |
-| 4 | MOUSE | Hold Tab | Pointer movement, scrolling, and mouse buttons |
-| 5 | SYSTEM | From FUNCTION, hold the right outer thumb | Reserved for guarded Cheapino controls in a later phase |
+| 1 | NAV | Hold Escape | Navigation, browser controls, editing shortcuts, and Repeat |
+| 2 | NUM_EDIT | Hold Enter, or toggle from `SYSTEM` | Digits, arithmetic, punctuation, navigation, and word editing |
+| 3 | FUNCTION | Hold Space | Function keys, media, brightness, sticky modifiers, and ASCII Space |
+| 4 | MOUSE | Hold Tab, or toggle from `SYSTEM` | Pointer movement, scrolling, buttons, and speed selection |
+| 5 | SYSTEM | From FUNCTION, hold the right outer thumb | Caps Lock, Compose, and guarded layer toggles |
 
 Programming symbols are provided by native Ergo-L AltGr through the plain
-right-Alt thumb. The left outer thumb on `FUNCTION` provides one-shot AltGr.
+right-Alt thumb. `FUNCTION` provides one-shot AltGr and Shift; each remains
+active for the next key or expires after one second.
 
 ### NAV
 
 ```text
- NumEdit Ctrl+T  BrowserBack  BrowserFwd  x   | Home  PgDn  PgUp  End    GUI+P
- Ctrl+A  Ctrl+S  Shift+Tab    Tab         x   | Left  Down  Up    Right  Fun
- Ctrl+Z  Ctrl+X  Ctrl+C       Ctrl+V      x   | WhL   WhD   WhU   WhR    x
-                         ___  ___  ___         | ___  Delete  Escape
+ Ctrl+Left        Ctrl+Right        Ctrl+Bsp   Ctrl+Del   Repeat | BrowserBack  Home           PgDn     PgUp  End
+ Ctrl+A           Ctrl+Z            Redo       Ctrl+C     Ctrl+V | BrowserFwd   Left           Down     Up    Right
+ Ctrl+Shift+Left  Ctrl+Shift+Right  Shift+Home Shift+End Ctrl+X | x             Ctrl+Shift+Tab Ctrl+Tab x     x
+                                      ___  ___  ___       | ___  Delete  Escape
 ```
 
 ### NUM_EDIT
@@ -110,7 +113,7 @@ right-Alt thumb. The left outer thumb on `FUNCTION` provides one-shot AltGr.
  =       Home       Up          End         PgUp       | /   7   8   9   *
  +       Left       Down        Right       PgDn       | -   4   5   6   0
  ODK     Ctrl+Left  Ctrl+Bsp    Ctrl+Del    Ctrl+Right | ,   1   2   3   .
-                         Tab  Backspace  Enter         | held  x  x
+                         Tab  Backspace  Enter         | NumEdit/Unlock  x  x
 ```
 
 `ODK` emits Ergo-L's host-native one-dead-key position. Follow it with digits
@@ -119,30 +122,44 @@ right-Alt thumb. The left outer thumb on `FUNCTION` provides one-shot AltGr.
 ### FUNCTION
 
 ```text
- F1  F2   F3   F4   x   | PrintScreen  Brightness-  Brightness+  Vol-/Mute  Vol+
- F5  F6   F7   F8   x   | x            LeftCtrl     LeftShift    LeftAlt    LeftGUI
- F9  F10  F11  F12  x   | x            Previous     Play/Pause   Next       x
-             OneShotAltGr  Space  ___    | ___  Backspace  SYSTEM
+ F1  F2   F3   F4   x   | PrintScreen  Brightness-  Brightness+  Mute       ASCII Space
+ F5  F6   F7   F8   x   | LeftCtrl     LeftShift    LeftAlt      LeftGUI    x
+ F9  F10  F11  F12  x   | Previous     Play/Pause   Next         Volume-    Volume+
+             OneShotAltGr  Space  x      | OneShotShift  Backspace  SYSTEM
 ```
 
-`Vol-/Mute` sends Volume Down when tapped and Mute when held.
+`ASCII Space` sends a literal space while temporarily masking Shift and AltGr,
+then restores all held, weak, and one-shot modifiers. It is useful when a
+sticky modifier is active but the intended output is an ordinary space.
 
 ### MOUSE
 
 ```text
- x  x  x  x  x   | x     Button1  Button3  Button2  x
- x  x  x  x  x   | Left  Down     Up       Right    x
- x  x  x  x  x   | WhL   WhD      WhU      WhR      x
-             Delete  ___  ___      | ___  ___  Escape
+ Slow  Fast  x  x  x   | Button4  WhL   WhD   WhU   WhR
+ Ctrl  Shift Alt GUI x | Button5  Left  Down  Up    Right
+ Button1 Button2 Button3 x x | x   x     x     x     x
+              Base  Space  Mouse/Unlock | x  Backspace  Escape
 ```
 
-Mouse Keys currently use QMK's accelerated defaults. No keymap-specific speed,
-interval, or wheel tuning is applied yet.
+Mouse Keys use QMK's accelerated defaults. Hold `Slow` or `Fast` before a
+movement or wheel key to select QMK acceleration level 0 or 2; without either
+selector, the normal accelerated profile applies. Buttons 4 and 5 provide the
+usual browser back/forward actions. `Base` exits a momentary or locked mouse
+layer, and `Mouse/Unlock` releases a mouse-layer toggle.
 
 ### SYSTEM
 
-All Cheapino `SYSTEM` positions are currently disabled. The layer is reserved
-for guarded bootloader, lighting, and diagnostic controls in later phases.
+```text
+ x  x  x  x  x   | CapsLock  Compose  x  x  x
+ x  x  x  x  x   | NumEditLock  x        x  x  MouseLock
+ x  x  x  x  x   | x         x        x  x  x
+             x  x  x          | x  x  x
+```
+
+`Compose` sends the Application/Menu key. On Linux XKB, configure
+`compose:menu` so that key starts a Compose sequence. `NumEditLock` and
+`MouseLock` toggle their layers with no idle timeout or persistent visual
+indicator; use the access thumb shown on the locked layer to unlock it.
 
 ## Tap-hold behavior
 
@@ -153,7 +170,6 @@ closely as the two firmware implementations allow:
 | --- | --- |
 | Home-row mod tapping term | 200 ms |
 | Thumb layer-tap tapping term | 150 ms |
-| `Vol-/Mute` tapping term | 200 ms |
 | Home-row quick-tap term | 175 ms |
 | Space quick-tap term | 175 ms |
 | Escape, Tab, and Enter quick-tap term | 0 ms |
@@ -170,9 +186,9 @@ rolls remain spaces. Tapping Space and quickly holding it again repeats Space;
 the other layer thumbs enter their layers instead of repeating Escape, Tab, or
 Enter. Backspace is a plain key and always supports normal hold-to-repeat.
 
-Caps Word is compiled and configured for activation with both Shift modifiers.
-On this 3x5 map, Shift is provided by holding the `D` and `K` home-row mod-taps;
-there is no dedicated Caps Word key.
+The Arsenik keymap disables QMK Caps Word because its raw keycode classification
+does not follow the host-side Ergo-L translation. Use `CapsLock` on `SYSTEM`,
+or one-shot Shift on `FUNCTION`, when capitalization must persist.
 
 ## Encoder behavior
 
@@ -350,10 +366,8 @@ addition to successful compilation.
 | 2 | Trial constrained Speculative Hold | Apply Shift/Ctrl immediately for responsive Shift+click and Ctrl+scroll, while retaining the current tap-hold decisions | Small / medium |
 | 3 | Test and modernize the encoder path | Characterize current behavior, debounce the button and quadrature transitions, and move layer actions out of hard-coded keyboard-level layer numbers | Medium / medium |
 | 4 | Calibrate tap-hold timings dynamically | Use a temporary Dynamic Tapping Term build to measure QMK-specific HRM and thumb timings, then bake in the chosen constants and remove the controls | Small / low |
-| 5 | Add Repeat and Alternate Repeat | Use two currently disabled NAV positions for `QK_REP` and `QK_AREP`, including QMK's built-in reverse navigation, mouse, browser, media, and editing pairs | Small / low |
-| 6 | Add Layer Lock with an idle timeout | Allow sustained navigation or mouse work without holding a thumb key; automatically unlock after 30-60 seconds | Small / medium |
-| 7 | Tune Mouse Keys | Trial a 16 ms movement interval for a 60 Hz display and reduce maximum speed proportionally; keep accelerated mode unless another mode proves better in use | Small / low-medium |
-| 8 | Migrate the NKRO default metadata | Remove obsolete `usb.force_nkro`; express `host.default.nkro: false` with current QMK metadata, and do not enable default-on NKRO without a demonstrated greater-than-6-key chord | Small / low |
+| 5 | Tune Mouse Keys | Trial a 16 ms movement interval for a 60 Hz display and reduce maximum speed proportionally; keep accelerated mode unless another mode proves better in use | Small / low-medium |
+| 6 | Migrate the NKRO default metadata | Remove obsolete `usb.force_nkro`; express `host.default.nkro: false` with current QMK metadata, and do not enable default-on NKRO without a demonstrated greater-than-6-key chord | Small / low |
 
 ### Speculative Hold trial
 
@@ -387,14 +401,12 @@ Place `DT_UP`, `DT_DOWN`, and `DT_PRNT` in unused positions, make the per-key
 callback honor `g_tapping_term`, test real typing and layer entry, record the
 selected HRM/thumb values, then remove the diagnostic feature.
 
-### Mouse Keys and layer features
+### Mouse Keys
 
-Repeat/Alternate Repeat and Layer Lock both fit currently disabled positions on
-NAV or MOUSE. Layer Lock should include an idle timeout because
-the keyboard has no persistent display or layer-color indication. Mouse tuning
-is subjective: compare the current 20 ms accelerated default against a 16 ms
-interval on the actual host, while lowering `MOUSEKEY_MAX_SPEED` enough to keep
-the same usable range.
+Mouse tuning is subjective: compare the current 20 ms accelerated default
+against a 16 ms interval on the actual host, while lowering
+`MOUSEKEY_MAX_SPEED` enough to keep the same usable range. The implemented
+Slow/normal/Fast selection should remain available during that trial.
 
 ### Recommended implementation order
 
@@ -402,11 +414,8 @@ the same usable range.
 2. Add characterization tests, then refactor the encoder.
 3. Independently trial constrained Speculative Hold.
 4. Use a temporary build to calibrate tap-hold timings.
-5. Choose key positions for Repeat/Alternate Repeat and Layer Lock.
-6. Tune Mouse Keys on the physical keyboard.
-7. Preserve Flow Tap unless testing proves that its broad ZMK-compatible policy
-   causes missed holds.
-8. Migrate the obsolete NKRO metadata without turning NKRO on by default.
+5. Tune Mouse Keys on the physical keyboard.
+6. Migrate the obsolete NKRO metadata without turning NKRO on by default.
 
 ## Troubleshooting
 

@@ -10,7 +10,9 @@ enum arsenik_layers {
     _SYSTEM,
 };
 
-#define VOLD_MUTE LT(_BASE, KC_VOLD)
+enum custom_keycodes {
+    ASCII_SPACE = SAFE_RANGE,
+};
 
 // The ARSENIK_LAYOUT macro allows us to declare a config for a 4x6+3 keyboard, then truncate it
 // (or fill it with noops) depending on the size of your keyboard. Your keyboard may have extra
@@ -33,11 +35,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     [_NAV] = ARSENIK_LAYOUT(
-        __, G(AS(1)),      G(AS(2)),  G(AS(3)),   G(AS(4)),  G(AS(5)), G(AS(6)),  G(AS(7)),  G(AS(8)), G(AS(9)), G(AS(0)),      __,
-        __, MO(_NUM_EDIT), C(AS(T)), KC_WBAK,   KC_WFWD,  XX,      KC_HOME,  KC_PGDN,  KC_PGUP, KC_END,  G(AS(P)),       __,
-        __, C(AS(A)),      C(AS(S)), S(KC_TAB), KC_TAB,   XX,      KC_LEFT,  KC_DOWN,  KC_UP,   KC_RGHT, MO(_FUNCTION), __,
-        __, C(AS(Z)),     C(AS(X)), C(AS(C)),  C(AS(V)), XX,      MS_WHLL,  MS_WHLD,  MS_WHLU, MS_WHLR, XX,           __,
-                                         __,   __,   __,      __,   KC_DEL,   KC_ESC
+        __, __,            __,            __,         __,         __,       __,      __,         __,         __,        __,      __,
+        __, C(KC_LEFT),    C(KC_RGHT),    C(KC_BSPC), C(KC_DEL),  QK_REP,   KC_WBAK, KC_HOME,    KC_PGDN,    KC_PGUP,   KC_END,  __,
+        __, C(AS(A)),      C(AS(Z)),      C(S(AS(Z))), C(AS(C)),  C(AS(V)), KC_WFWD, KC_LEFT,    KC_DOWN,    KC_UP,     KC_RGHT, __,
+        __, C(S(KC_LEFT)), C(S(KC_RGHT)), S(KC_HOME), S(KC_END), C(AS(X)),  XX,      C(S(KC_TAB)), C(KC_TAB), XX,        XX,      __,
+                                               __,   __,   __,      __,   KC_DEL,   KC_ESC
     ),
 
     [_NUM_EDIT] = ARSENIK_LAYOUT(
@@ -45,29 +47,29 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         __, AS(EQL),     KC_HOME,    KC_UP,      KC_END,     KC_PGUP,      AS(SLSH), KC_7, KC_8, KC_9, AS(ASTR), __,
         __, AS(PLUS),    KC_LEFT,    KC_DOWN,    KC_RGHT,    KC_PGDN,      AS(MINS), KC_4, KC_5, KC_6, KC_0,     __,
         __, AS(ODK),     C(KC_LEFT), C(KC_BSPC), C(KC_DEL), C(KC_RGHT),   AS(COMM), KC_1, KC_2, KC_3, AS(DOT),  __,
-                                      KC_TAB,   KC_BSPC,   KC_ENT,      __,   XX,   XX
+                                      KC_TAB,   KC_BSPC,   KC_ENT,      TG(_NUM_EDIT),   XX,   XX
     ),
 
     [_FUNCTION] = ARSENIK_LAYOUT(
         __, __,    __,     __,     __,     __,      __,      __,      __,      __,        __,      __,
-        __, KC_F1, KC_F2,  KC_F3,  KC_F4,  XX,      KC_PSCR, KC_BRID, KC_BRIU, VOLD_MUTE, KC_VOLU, __,
-        __, KC_F5, KC_F6,  KC_F7,  KC_F8,  XX,      XX,      KC_LCTL, KC_LSFT, KC_LALT,   KC_LGUI, __,
-        __, KC_F9, KC_F10, KC_F11, KC_F12, XX,      XX,      KC_MPRV, KC_MPLY, KC_MNXT,   XX,      __,
-                         OSM(MOD_RALT),   KC_SPC,   __,      __,   KC_BSPC,   MO(_SYSTEM)
+        __, KC_F1, KC_F2,  KC_F3,  KC_F4,  XX,      KC_PSCR, KC_BRID, KC_BRIU, KC_MUTE,   ASCII_SPACE, __,
+        __, KC_F5, KC_F6,  KC_F7,  KC_F8,  XX,      KC_LCTL, KC_LSFT, KC_LALT, KC_LGUI,   XX,      __,
+        __, KC_F9, KC_F10, KC_F11, KC_F12, XX,      KC_MPRV, KC_MPLY, KC_MNXT, KC_VOLD,   KC_VOLU, __,
+                         OSM(MOD_RALT),   KC_SPC,   XX,      OSM(MOD_LSFT),   KC_BSPC,   MO(_SYSTEM)
     ),
 
     [_MOUSE] = ARSENIK_LAYOUT(
         __, __, __, __, __, __,      __,      __,      __,      __,      __, __,
-        __, XX, XX, XX, XX, XX,      XX,      MS_BTN1, MS_BTN3, MS_BTN2, XX, __,
-        __, XX, XX, XX, XX, XX,      MS_LEFT, MS_DOWN, MS_UP,   MS_RGHT, XX, __,
-        __, XX, XX, XX, XX, XX,      MS_WHLL, MS_WHLD, MS_WHLU, MS_WHLR, XX, __,
-             KC_DEL,   __,   __,      __,   __,   KC_ESC
+        __, MS_ACL0, MS_ACL2, XX, XX, XX,      MS_BTN4, MS_WHLL, MS_WHLD, MS_WHLU, MS_WHLR, __,
+        __, KC_LCTL, KC_LSFT, KC_LALT, KC_LGUI, XX,      MS_BTN5, MS_LEFT, MS_DOWN, MS_UP, MS_RGHT, __,
+        __, MS_BTN1, MS_BTN2, MS_BTN3, XX, XX,      XX, XX, XX, XX, XX, __,
+             TO(_BASE),   KC_SPC,   TG(_MOUSE),      XX,   KC_BSPC,   KC_ESC
     ),
 
     [_SYSTEM] = ARSENIK_LAYOUT(
         XX, XX, XX, XX, XX, XX,      XX, XX, XX, XX, XX, XX,
-        XX, XX, XX, XX, XX, XX,      XX, XX, XX, XX, XX, XX,
-        XX, XX, XX, XX, XX, XX,      XX, XX, XX, XX, XX, XX,
+        XX, XX, XX, XX, XX, XX,      KC_CAPS, KC_APP, XX, XX, XX, XX,
+        XX, XX, XX, XX, XX, XX,      TG(_NUM_EDIT), XX, XX, XX, TG(_MOUSE), XX,
         XX, XX, XX, XX, XX, XX,      XX, XX, XX, XX, XX, XX,
                     XX, XX, XX,      XX, XX, XX
     ),
@@ -81,14 +83,35 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_split_
                    '*', '*', '*', '*', 'R', 'R'
 );
 
+static void tap_ascii_space(void) {
+    const uint8_t suppressed_mods = MOD_MASK_SHIFT | MOD_BIT(KC_RALT);
+    const uint8_t mods            = get_mods();
+    const uint8_t weak_mods       = get_weak_mods();
+    const uint8_t oneshot_mods    = get_oneshot_mods();
+    const uint8_t locked_mods     = get_oneshot_locked_mods();
+
+    del_mods(suppressed_mods);
+    del_weak_mods(suppressed_mods);
+    del_oneshot_mods(suppressed_mods);
+    del_oneshot_locked_mods(suppressed_mods);
+    send_keyboard_report();
+
+    tap_code(KC_SPC);
+
+    set_mods(mods);
+    set_weak_mods(weak_mods);
+    set_oneshot_mods(oneshot_mods);
+    set_oneshot_locked_mods(locked_mods);
+    send_keyboard_report();
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-        case VOLD_MUTE:
-            if (!record->tap.count && record->event.pressed) {
-                tap_code16(KC_MUTE);
-                return false;
+        case ASCII_SPACE:
+            if (record->event.pressed) {
+                tap_ascii_space();
             }
-            break;
+            return false;
     }
     return true;
 }
@@ -97,9 +120,6 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
     (void)record;
     if (IS_QK_MOD_TAP(keycode)) {
         return ARSENIK_HRM_TAPPING_TERM;
-    }
-    if (keycode == VOLD_MUTE) {
-        return ARSENIK_MEDIA_TAPPING_TERM;
     }
     return ARSENIK_THUMB_TAPPING_TERM;
 }
