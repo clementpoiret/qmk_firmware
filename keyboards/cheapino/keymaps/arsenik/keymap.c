@@ -77,7 +77,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [_SYSTEM] = ARSENIK_LAYOUT(
         XX, XX, XX, XX, XX, XX,      XX, XX, XX, XX, XX, XX,
-        XX, QK_BOOT, CK_DIAG, XX, XX, XX,      KC_CAPS, KC_APP, XX, XX, XX, XX,
+        XX, QK_BOOT, CK_DIAG, XX, XX, XX,      XX, XX, XX, KC_CAPS, KC_APP, XX,
         XX, XX, XX, XX, XX, XX,      TG(_NUM_EDIT), XX, XX, XX, TG(_MOUSE), XX,
         XX, XX, XX, XX, XX, XX,      XX, XX, XX, XX, XX, XX,
                     XX, XX, XX,      XX, XX, XX
@@ -94,8 +94,9 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     [_SYSTEM]   = {ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
 };
 
+// Only layer-tap thumbs are exempt from the opposite-hands rule.
 const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_split_3x5_3(
-    'L', 'L', 'L', 'L', 'L',      'R', 'R', 'R', '*', 'R',
+    'L', 'L', 'L', 'L', 'L',      'R', 'R', 'R', 'R', 'R',
     'L', 'L', 'L', 'L', 'L',      'R', 'R', 'R', 'R', 'R',
     'L', 'L', 'L', 'L', 'L',      'R', 'R', 'R', 'R', 'R',
                    '*', '*', '*', '*', 'R', 'R'

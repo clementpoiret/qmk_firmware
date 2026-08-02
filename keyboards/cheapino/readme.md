@@ -11,6 +11,12 @@ architecture used by the companion ZMK Corne, function and media keys, and
 mouse keys. Bluetooth controls are intentionally absent because the Cheapino
 is wired.
 
+The canonical cross-firmware layer and gesture contract lives in the companion
+Corne repository's
+[shared behavior specification](https://github.com/clementpoiret/zmk-corne-arsenik/blob/main/docs/shared-behavior.md).
+This README documents the Cheapino implementation and hardware-specific
+operations; the shared specification is authoritative if summaries differ.
+
 Unlike the two-controller ZMK Corne, the Cheapino uses one RP2040 for the whole
 keyboard. Build and flash **one UF2 file**, not separate left and right images.
 
@@ -54,17 +60,23 @@ In the diagrams below:
 
 ### Base layer
 
+The primary diagram shows the semantic output produced by Linux XKB Ergo-L:
+
 ```text
- Q       W       E        R       T      | Y       U        I        O       P
- A/GUI   S/Alt   D/Shift  F/Ctrl  G      | H       J/Ctrl   K/Shift  L/Alt   ;/GUI
- Z       X       C        V       B      | N       M        ,        .       /
+ Q       C       O        P       W      | J       M        D        ODK     Y
+ A/GUI   S/Alt   E/Shift  N/Ctrl  F      | L       R/Ctrl   T/Shift  I/Alt   U/GUI
+ Z       X       -        V       B      | .       H        G        ,       K
              Esc/Nav  Space/Fun  Tab/Mouse | Enter/NumEdit  Backspace  RAlt
 ```
 
-The home-row keys become modifiers when held:
+The firmware itself keeps the raw positional QWERTY usages shown in the shared
+specification's debugging appendix.
 
-| Tap | A | S | D | F | J | K | L | ; |
+The home-row positions become modifiers when held:
+
+| Raw position | A | S | D | F | J | K | L | ; |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Ergo-L tap | A | S | E | N | R | T | I | U |
 | Hold | Left GUI | Left Alt | Left Shift | Left Ctrl | Right Ctrl | Right Shift | Right Alt | Right GUI |
 
 The thumb keys are:
@@ -99,59 +111,15 @@ Programming symbols are provided by native Ergo-L AltGr through the plain
 right-Alt thumb. `FUNCTION` provides one-shot AltGr and Shift; each remains
 active for the next key or expires after one second.
 
-### NAV
-
-```text
- Ctrl+Left        Ctrl+Right        Ctrl+Bsp   Ctrl+Del   Repeat | BrowserBack  Home           PgDn     PgUp  End
- Ctrl+A           Ctrl+Z            Redo       Ctrl+C     Ctrl+V | BrowserFwd   Left           Down     Up    Right
- Ctrl+Shift+Left  Ctrl+Shift+Right  Shift+Home Shift+End Ctrl+X | x             Ctrl+Shift+Tab Ctrl+Tab x     x
-                                      ___  ___  ___       | ___  Delete  Escape
-```
-
-### NUM_EDIT
-
-```text
- =       Home       Up          End         PgUp       | /   7   8   9   *
- +       Left       Down        Right       PgDn       | -   4   5   6   0
- ODK     Ctrl+Left  Ctrl+Bsp    Ctrl+Del    Ctrl+Right | ,   1   2   3   .
-                         Tab  Backspace  Enter         | NumEdit/Unlock  x  x
-```
-
-`ODK` emits Ergo-L's host-native one-dead-key position. Follow it with digits
-1–5 for `„`, `“`, `”`, `¢`, and `‰` respectively.
-
-### FUNCTION
-
-```text
- F1  F2   F3   F4   x   | PrintScreen  Brightness-  Brightness+  Mute       ASCII Space
- F5  F6   F7   F8   x   | LeftCtrl     LeftShift    LeftAlt      LeftGUI    x
- F9  F10  F11  F12  x   | Previous     Play/Pause   Next         Volume-    Volume+
-             OneShotAltGr  Space  x      | OneShotShift  Backspace  SYSTEM
-```
-
-`ASCII Space` sends a literal space while temporarily masking Shift and AltGr,
-then restores all held, weak, and one-shot modifiers. It is useful when a
-sticky modifier is active but the intended output is an ordinary space.
-
-### MOUSE
-
-```text
- Slow  Fast  x  x  x   | Button4  WhL   WhD   WhU   WhR
- Ctrl  Shift Alt GUI x | Button5  Left  Down  Up    Right
- Button1 Button2 Button3 x x | x   x     x     x     x
-              Base  Space  Mouse/Unlock | x  Backspace  Escape
-```
-
-Mouse Keys use QMK's accelerated defaults. Hold `Slow` or `Fast` before a
-movement or wheel key to select QMK acceleration level 0 or 2; without either
-selector, the normal accelerated profile applies. Buttons 4 and 5 provide the
-usual browser back/forward actions. `Base` exits a momentary or locked mouse
-layer, and `Mouse/Unlock` releases a mouse-layer toggle.
+Exact `NAV`, `NUM_EDIT`, `FUNCTION`, and `MOUSE` diagrams and their acceptance
+criteria are maintained once in the shared behavior specification. QMK uses
+Mouse Keys acceleration levels 0 and 2 for its Slow and Fast selectors; normal
+mode retains QMK's accelerated default.
 
 ### SYSTEM
 
 ```text
- Bootloader Diagnostics x x x | CapsLock     Compose x x x
+ Bootloader Diagnostics x x x | x            x       x CapsLock Compose
  x          x           x x x | NumEditLock  x       x x MouseLock
  x          x           x x x | x            x       x x x
                     x  x  x   | x  x  x
@@ -165,30 +133,13 @@ indicator; use the access thumb shown on the locked layer to unlock it.
 is present only in a Console-enabled build and is disabled in the normal
 release build.
 
-## Tap-hold behavior
+## Tap-hold implementation
 
-The timing and decision policy intentionally mirrors the ZMK keyboard as
-closely as the two firmware implementations allow:
-
-| Setting | Current value or behavior |
-| --- | --- |
-| Home-row mod tapping term | 200 ms |
-| Thumb layer-tap tapping term | 150 ms |
-| Home-row quick-tap term | 175 ms |
-| Space quick-tap term | 175 ms |
-| Escape, Tab, and Enter quick-tap term | 0 ms |
-| Flow Tap | 150 ms for HRMs after text-like keys only |
-| Chordal Hold | Same-hand HRM rolls prefer taps; layer thumbs are exempt |
-| Permissive Hold | HRMs and Space/Function only |
-| Hold On Other Key Press | Escape/Nav, Tab/Mouse, and Enter/NumEdit only |
-
-Flow Tap and the opposite-hand Chordal Hold rule apply only to the eight HRMs.
-Escape/Nav, Tab/Mouse, and Enter/NumEdit settle as holds as soon as another key
-is pressed, including a same-hand target or a press immediately after typing.
-Space/Function uses a more conservative nested-key policy so ordinary typing
-rolls remain spaces. Tapping Space and quickly holding it again repeats Space;
-the other layer thumbs enter their layers instead of repeating Escape, Tab, or
-Enter. Backspace is a plain key and always supports normal hold-to-repeat.
+The shared specification owns the observable timing contract. In QMK, Flow Tap
+and Chordal Hold apply only to the eight HRMs; only the four layer-tap thumbs are
+marked neutral in `chordal_hold_layout`. Escape/Nav, Tab/Mouse, and
+Enter/NumEdit use per-key Hold On Other Key Press, while Space/Function keeps a
+more conservative Permissive Hold policy. Backspace is a plain repeatable key.
 
 The Arsenik keymap disables QMK Caps Word because its raw keycode classification
 does not follow the host-side Ergo-L translation. Use `CapsLock` on `SYSTEM`,
