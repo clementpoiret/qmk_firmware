@@ -78,7 +78,7 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_split_
     'L', 'L', 'L', 'L', 'L',      'R', 'R', 'R', '*', 'R',
     'L', 'L', 'L', 'L', 'L',      'R', 'R', 'R', 'R', 'R',
     'L', 'L', 'L', 'L', 'L',      'R', 'R', 'R', 'R', 'R',
-                   'L', 'L', 'L', 'R', 'R', 'R'
+                   '*', '*', '*', '*', 'R', 'R'
 );
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -95,25 +95,40 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
     (void)record;
-    if (IS_QK_MOD_TAP(keycode) || keycode == VOLD_MUTE) {
+    if (IS_QK_MOD_TAP(keycode)) {
         return ARSENIK_HRM_TAPPING_TERM;
+    }
+    if (keycode == VOLD_MUTE) {
+        return ARSENIK_MEDIA_TAPPING_TERM;
     }
     return ARSENIK_THUMB_TAPPING_TERM;
 }
 
 uint16_t get_quick_tap_term(uint16_t keycode, keyrecord_t *record) {
     (void)record;
-    return IS_QK_MOD_TAP(keycode) ? ARSENIK_QUICK_TAP_TERM : 0;
+    if (IS_QK_MOD_TAP(keycode)) {
+        return ARSENIK_HRM_QUICK_TAP_TERM;
+    }
+    if (keycode == LT(_FUNCTION, KC_SPC)) {
+        return ARSENIK_SPACE_QUICK_TAP_TERM;
+    }
+    return 0;
 }
 
 bool get_permissive_hold(uint16_t keycode, keyrecord_t *record) {
     (void)record;
-    return keycode != VOLD_MUTE;
+    return IS_QK_MOD_TAP(keycode) || keycode == LT(_FUNCTION, KC_SPC);
+}
+
+bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
+    (void)record;
+    return keycode == LT(_NAV, KC_ESC) || keycode == LT(_MOUSE, KC_TAB) || keycode == LT(_NUM_EDIT, KC_ENT);
 }
 
 uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t *record, uint16_t prev_keycode) {
-    (void)keycode;
     (void)record;
-    (void)prev_keycode;
-    return FLOW_TAP_TERM;
+    if (IS_QK_MOD_TAP(keycode) && is_flow_tap_key(keycode) && is_flow_tap_key(prev_keycode)) {
+        return FLOW_TAP_TERM;
+    }
+    return 0;
 }

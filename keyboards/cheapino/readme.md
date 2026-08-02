@@ -155,16 +155,20 @@ closely as the two firmware implementations allow:
 | Thumb layer-tap tapping term | 150 ms |
 | `Vol-/Mute` tapping term | 200 ms |
 | Home-row quick-tap term | 175 ms |
-| Other quick-tap term | 0 ms |
-| Flow Tap | 150 ms after every preceding key |
-| Chordal Hold | Same-hand rolls prefer taps; opposite-hand chords may hold |
-| Permissive Hold | Enabled per key, except for `Vol-/Mute` |
+| Space quick-tap term | 175 ms |
+| Escape, Tab, and Enter quick-tap term | 0 ms |
+| Flow Tap | 150 ms for HRMs after text-like keys only |
+| Chordal Hold | Same-hand HRM rolls prefer taps; layer thumbs are exempt |
+| Permissive Hold | HRMs and Space/Function only |
+| Hold On Other Key Press | Escape/Nav, Tab/Mouse, and Enter/NumEdit only |
 
-The custom `get_flow_tap_term()` deliberately applies the 150 ms Flow Tap term
-to every preceding key. This is broader than QMK's guarded default and matches
-ZMK's `require-prior-idle-ms = <150>` behavior more closely. It should remain
-unchanged unless real use shows missed layer holds after navigation, media, or
-shortcut keys.
+Flow Tap and the opposite-hand Chordal Hold rule apply only to the eight HRMs.
+Escape/Nav, Tab/Mouse, and Enter/NumEdit settle as holds as soon as another key
+is pressed, including a same-hand target or a press immediately after typing.
+Space/Function uses a more conservative nested-key policy so ordinary typing
+rolls remain spaces. Tapping Space and quickly holding it again repeats Space;
+the other layer thumbs enter their layers instead of repeating Escape, Tab, or
+Enter. Backspace is a plain key and always supports normal hold-to-repeat.
 
 Caps Word is compiled and configured for activation with both Shift modifiers.
 On this 3x5 map, Shift is provided by holding the `D` and `K` home-row mod-taps;
@@ -349,8 +353,7 @@ addition to successful compilation.
 | 5 | Add Repeat and Alternate Repeat | Use two currently disabled NAV positions for `QK_REP` and `QK_AREP`, including QMK's built-in reverse navigation, mouse, browser, media, and editing pairs | Small / low |
 | 6 | Add Layer Lock with an idle timeout | Allow sustained navigation or mouse work without holding a thumb key; automatically unlock after 30-60 seconds | Small / medium |
 | 7 | Tune Mouse Keys | Trial a 16 ms movement interval for a 60 Hz display and reduce maximum speed proportionally; keep accelerated mode unless another mode proves better in use | Small / low-medium |
-| 8 | Preserve or selectively guard Flow Tap | Keep the current unconditional 150 ms behavior for ZMK parity; only adopt QMK's alpha/Space and hotkey guards if missed layer holds are observed | Small / medium behavior change |
-| 9 | Migrate the NKRO default metadata | Remove obsolete `usb.force_nkro`; express `host.default.nkro: false` with current QMK metadata, and do not enable default-on NKRO without a demonstrated greater-than-6-key chord | Small / low |
+| 8 | Migrate the NKRO default metadata | Remove obsolete `usb.force_nkro`; express `host.default.nkro: false` with current QMK metadata, and do not enable default-on NKRO without a demonstrated greater-than-6-key chord | Small / low |
 
 ### Speculative Hold trial
 
