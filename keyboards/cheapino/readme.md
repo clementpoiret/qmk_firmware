@@ -202,11 +202,28 @@ input policy.
 
 The single LED defaults to a dim cyan-like color with HSV `128, 128, 32`. At
 startup it performs a non-blocking 2.5-second hue sweep, then restores the color
-that was active before the animation. Layer colors are intentionally disabled;
-an earlier implementation was found distracting.
+that was active before the animation. The Arsenik keymap overlays the following
+color for the highest active non-Base layer:
+
+| Layer | LED color |
+| --- | --- |
+| BASE | Cyan (the configured default) |
+| NAV | Blue |
+| NUM_EDIT | Green |
+| FUNCTION | Yellow |
+| MOUSE | Magenta |
+| SYSTEM | Red |
+
+The overlay retains the configured RGB brightness and respects the RGB Light
+on/off state. Momentary layers restore the previous color when released;
+locked `NUM_EDIT` and `MOUSE` layers keep their color until unlocked. If
+multiple layers are active, the highest layer wins, so `SYSTEM` displays red
+while it is reached through `FUNCTION`.
 
 The sweep and restoration use QMK's no-EEPROM RGB setter, so the animation does
-not persist any of its intermediate frames or add flash wear at startup.
+not persist any of its intermediate frames or add flash wear at startup. RGB
+lighting layers take precedence over the sweep, keeping the current layer
+visible even during the startup animation.
 
 ## Set up the build environment
 

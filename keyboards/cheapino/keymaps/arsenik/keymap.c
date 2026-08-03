@@ -20,6 +20,14 @@ enum arsenik_layers {
     _SYSTEM,
 };
 
+enum arsenik_rgb_layers {
+    _RGB_NAV,
+    _RGB_NUM_EDIT,
+    _RGB_FUNCTION,
+    _RGB_MOUSE,
+    _RGB_SYSTEM,
+};
+
 enum custom_keycodes {
     ASCII_SPACE = SAFE_RANGE,
     CHEAPINO_DIAG,
@@ -30,6 +38,20 @@ enum custom_keycodes {
 #else
 #    define CK_DIAG KC_NO
 #endif
+
+const rgblight_segment_t PROGMEM nav_rgb_layer[]      = RGBLIGHT_LAYER_SEGMENTS({0, 1, HSV_BLUE});
+const rgblight_segment_t PROGMEM num_edit_rgb_layer[] = RGBLIGHT_LAYER_SEGMENTS({0, 1, HSV_GREEN});
+const rgblight_segment_t PROGMEM function_rgb_layer[] = RGBLIGHT_LAYER_SEGMENTS({0, 1, HSV_YELLOW});
+const rgblight_segment_t PROGMEM mouse_rgb_layer[]    = RGBLIGHT_LAYER_SEGMENTS({0, 1, HSV_MAGENTA});
+const rgblight_segment_t PROGMEM system_rgb_layer[]   = RGBLIGHT_LAYER_SEGMENTS({0, 1, HSV_RED});
+
+const rgblight_segment_t *const PROGMEM arsenik_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
+    nav_rgb_layer,
+    num_edit_rgb_layer,
+    function_rgb_layer,
+    mouse_rgb_layer,
+    system_rgb_layer
+);
 
 // ARSENIK_LAYOUT keeps the source keymap in its original 4x6+3 shape and
 // selects the physical 3x5+3 positions used by Cheapino.
@@ -101,6 +123,19 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_split_
     'L', 'L', 'L', 'L', 'L',      'R', 'R', 'R', 'R', 'R',
                    '*', '*', '*', '*', 'R', 'R'
 );
+
+void keyboard_post_init_user(void) {
+    rgblight_layers = arsenik_rgb_layers;
+}
+
+layer_state_t layer_state_set_user(layer_state_t state) {
+    rgblight_set_layer_state(_RGB_NAV, layer_state_cmp(state, _NAV));
+    rgblight_set_layer_state(_RGB_NUM_EDIT, layer_state_cmp(state, _NUM_EDIT));
+    rgblight_set_layer_state(_RGB_FUNCTION, layer_state_cmp(state, _FUNCTION));
+    rgblight_set_layer_state(_RGB_MOUSE, layer_state_cmp(state, _MOUSE));
+    rgblight_set_layer_state(_RGB_SYSTEM, layer_state_cmp(state, _SYSTEM));
+    return state;
+}
 
 static void tap_ascii_space(void) {
     const uint8_t suppressed_mods = MOD_MASK_SHIFT | MOD_BIT(KC_RALT);
