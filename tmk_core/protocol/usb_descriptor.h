@@ -294,4 +294,9 @@ enum usb_endpoints {
 #define JOYSTICK_EPSIZE 8
 #define DIGITIZER_EPSIZE 8
 
+#ifdef SERIAL_NUMBER_USE_CUSTOM
+const void *usb_descriptor_get_serial_number(void);
+uint16_t    usb_descriptor_get_serial_number_size(void);
+#endif
+
 uint16_t get_usb_descriptor(const uint16_t wValue, const uint16_t wIndex, const uint16_t wLength, const void** const DescriptorAddress);

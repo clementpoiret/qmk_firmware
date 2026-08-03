@@ -49,7 +49,7 @@
 #    include "os_detection.h"
 #endif
 
-#if defined(SERIAL_NUMBER) || (defined(SERIAL_NUMBER_USE_HARDWARE_ID) && SERIAL_NUMBER_USE_HARDWARE_ID == TRUE)
+#if defined(SERIAL_NUMBER) || defined(SERIAL_NUMBER_USE_CUSTOM) || (defined(SERIAL_NUMBER_USE_HARDWARE_ID) && SERIAL_NUMBER_USE_HARDWARE_ID == TRUE)
 
 #    define HAS_SERIAL_NUMBER
 
@@ -57,7 +57,7 @@
 #        include "hardware_id.h"
 #    endif
 
-#endif // defined(SERIAL_NUMBER) || (defined(SERIAL_NUMBER_USE_HARDWARE_ID) && SERIAL_NUMBER_USE_HARDWARE_ID == TRUE)
+#endif // serial number configuration
 
 // clang-format off
 
@@ -390,6 +390,23 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM SharedReport[] = {
         HID_RI_REPORT_COUNT(8, 1),
         HID_RI_REPORT_SIZE(8, 16),
         HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_ARRAY | HID_IOF_ABSOLUTE),
+    HID_RI_END_COLLECTION(0),
+#endif
+
+#ifdef WIRELESS_RADIO_ENABLE
+    HID_RI_USAGE_PAGE(8, 0x01),           // Generic Desktop
+    HID_RI_USAGE(8, 0x0C),                // Wireless Radio Controls
+    HID_RI_COLLECTION(8, 0x01),           // Application
+        HID_RI_REPORT_ID(8, REPORT_ID_RADIO),
+        HID_RI_LOGICAL_MINIMUM(8, 0x00),
+        HID_RI_LOGICAL_MAXIMUM(8, 0x01),
+        HID_RI_USAGE(8, 0xC6),            // Wireless Radio Button
+        HID_RI_REPORT_COUNT(8, 1),
+        HID_RI_REPORT_SIZE(8, 1),
+        HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_RELATIVE),
+        HID_RI_REPORT_COUNT(8, 15),
+        HID_RI_REPORT_SIZE(8, 1),
+        HID_RI_INPUT(8, HID_IOF_CONSTANT),
     HID_RI_END_COLLECTION(0),
 #endif
 
@@ -1148,7 +1165,7 @@ const USB_Descriptor_String_t PROGMEM SerialNumberString = {
 };
 // clang-format on
 
-#else // defined(SERIAL_NUMBER)
+#elif !defined(SERIAL_NUMBER_USE_CUSTOM)
 
 #    if defined(SERIAL_NUMBER_USE_HARDWARE_ID) && SERIAL_NUMBER_USE_HARDWARE_ID == TRUE
 
@@ -1191,7 +1208,7 @@ void set_serial_number_descriptor(void) {
 
 #    endif // defined(SERIAL_NUMBER_USE_HARDWARE_ID) && SERIAL_NUMBER_USE_HARDWARE_ID == TRUE
 
-#endif // defined(SERIAL_NUMBER)
+#endif // serial number descriptor storage
 
 /**
  * This function is called by the library when in device mode, and must be overridden (see library "USB Descriptors"
@@ -1236,12 +1253,17 @@ uint16_t get_usb_descriptor(const uint16_t wValue, const uint16_t wIndex, const 
                     break;
 #ifdef HAS_SERIAL_NUMBER
                 case 0x03:
-                    Address = (const USB_Descriptor_String_t*)&SerialNumberString;
-#    if defined(SERIAL_NUMBER)
-                    Size = pgm_read_byte(&SerialNumberString.Header.Size);
+#    if defined(SERIAL_NUMBER_USE_CUSTOM)
+                    Address = usb_descriptor_get_serial_number();
+                    Size    = usb_descriptor_get_serial_number_size();
 #    else
+                    Address = (const USB_Descriptor_String_t*)&SerialNumberString;
+#        if defined(SERIAL_NUMBER)
+                    Size = pgm_read_byte(&SerialNumberString.Header.Size);
+#        else
                     set_serial_number_descriptor();
                     Size = ((const USB_Descriptor_String_t*)SerialNumberString)->Header.Size;
+#        endif
 #    endif
 
                     break;

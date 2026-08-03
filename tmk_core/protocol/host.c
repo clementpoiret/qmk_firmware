@@ -251,6 +251,19 @@ void host_consumer_send(uint16_t usage) {
     (*driver->send_extra)(&report);
 }
 
+#ifdef WIRELESS_RADIO_ENABLE
+void host_radio_send(void) {
+    host_driver_t *driver = host_get_active_driver();
+    if (!driver || !driver->send_extra) return;
+
+    report_extra_t report = {
+        .report_id = REPORT_ID_RADIO,
+        .usage     = 1,
+    };
+    (*driver->send_extra)(&report);
+}
+#endif
+
 #ifdef JOYSTICK_ENABLE
 void host_joystick_send(joystick_t *joystick) {
     if (!driver) return;
